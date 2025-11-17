@@ -6,30 +6,22 @@ from datetime import timedelta
 from databricks.connect import DatabricksSession
 
 def get_spark():
-    """
-    Build Databricks Connect remote Spark session.
-    Requires the following env vars set:
-      - DATABRICKS_HOST
-      - DATABRICKS_TOKEN
-      - DATABRICKS_CLUSTER_ID
-      - DATABRICKS_HTTP_PATH
-    """
     host = os.getenv("DATABRICKS_HOST")
     token = os.getenv("DATABRICKS_TOKEN")
-    cluster_id = os.getenv("DATABRICKS_CLUSTER_ID")
-    http_path = os.getenv("DATABRICKS_HTTP_PATH")
 
-    if not all([host, token, cluster_id, http_path]):
-        raise RuntimeError("Missing one of DATABRICKS_HOST/DATABRICKS_TOKEN/DATABRICKS_CLUSTER_ID/DATABRICKS_HTTP_PATH")
+    if not host or not token:
+        raise RuntimeError("Missing DATABRICKS_HOST or DATABRICKS_TOKEN")
 
-    return (
+    print("Initializing Databricks Connect Spark session...")
+
+    spark = (
         DatabricksSession.builder
         .host(host)
         .token(token)
-        .cluster_id(cluster_id)
-        .http_path(http_path)
-        .getOrCreate()
+        .build()
     )
+
+    return spark
 
 def main():
     # table names (catalog.schema.table). Adjust if needed.
