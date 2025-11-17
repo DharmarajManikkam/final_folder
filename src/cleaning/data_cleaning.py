@@ -5,22 +5,12 @@ import pandas as pd
 from datetime import timedelta
 from databricks.connect import DatabricksSession
 
+from databricks.connect import DatabricksSession
+
 def get_spark():
-    host = os.getenv("DATABRICKS_HOST")
-    token = os.getenv("DATABRICKS_TOKEN")
-
-    if not host or not token:
-        raise RuntimeError("Missing DATABRICKS_HOST or DATABRICKS_TOKEN")
-
-    print("Initializing Databricks Connect Spark session...")
-
-    spark = (
-        DatabricksSession.builder
-        .host(host)
-        .token(token)
-        .build()
-    )
-
+    print("Initializing Databricks Spark session via Databricks Connect v15...")
+    spark = DatabricksSession.builder.getOrCreate()
+    print("Spark session created!")
     return spark
 
 def main():
