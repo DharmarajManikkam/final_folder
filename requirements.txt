@@ -1,0 +1,6 @@
+# requirements.txt
+databricks-connect==15.3.0
+pandas>=1.2.5,<2.2.0
+pyarrow
+numpy
+pyspark==3.5.0

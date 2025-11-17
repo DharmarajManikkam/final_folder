@@ -1,0 +1,63 @@
+# .github/workflows/ci.yml
+name: CI - Data Cleaning (Databricks Connect)
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  run-data-cleaning:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        # databricks-connect included in requirements but sometimes helpful to ensure
+        pip install databricks-connect==15.3.0
+
+    - name: Write databricks config (from secrets)
+      env:
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        DATABRICKS_CLUSTER_ID: ${{ secrets.DATABRICKS_CLUSTER_ID }}
+        DATABRICKS_HTTP_PATH: ${{ secrets.DATABRICKS_HTTP_PATH }}
+      run: |
+        mkdir -p config
+        cat > ./config/databricks_config.yaml <<'YAML'
+        host: ${DATABRICKS_HOST}
+        token: ${DATABRICKS_TOKEN}
+        cluster_id: ${DATABRICKS_CLUSTER_ID}
+        http_path: ${DATABRICKS_HTTP_PATH}
+        default_catalog: "workspace"
+        default_schema: "feature_store_project"
+        YAML
+        echo "Wrote config/databricks_config.yaml"
+
+    - name: Export config path for Databricks Connect (optional)
+      run: |
+        export DATABRICKS_CONFIG_FILE=$(pwd)/config/databricks_config.yaml
+        echo "DATABRICKS_CONFIG_FILE=$DATABRICKS_CONFIG_FILE"
+      shell: bash
+
+    - name: Run data cleaning script
+      env:
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        DATABRICKS_CLUSTER_ID: ${{ secrets.DATABRICKS_CLUSTER_ID }}
+        DATABRICKS_HTTP_PATH: ${{ secrets.DATABRICKS_HTTP_PATH }}
+        DATABRICKS_CATALOG: "workspace"
+        DATABRICKS_SCHEMA: "feature_store_project"
+      run: |
+        python src/cleaning/data_cleaning.py
